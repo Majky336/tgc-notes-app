@@ -2,12 +2,38 @@ import React from "react";
 import { RouteComponentProps } from "@reach/router";
 
 import Page from "../components/Page/Page";
+import { gql, useQuery } from "@apollo/client";
+import { NotesReponse } from "../types/TNote";
+import Loader from "../components/Loader/Loader";
+import NoteList from "../components/NoteList/NoteList";
+import AddNoteForm from "../components/AddNoteForm/AddNoteForm";
+
+const NOTES = gql`
+  query GetNotes {
+    notes {
+      id
+      title
+      text
+    }
+  }
+`;
 
 const HomePage = (props: RouteComponentProps) => {
+  const { loading, error, data } = useQuery<NotesReponse>(NOTES);
+
+  if (loading) {
+    return <Loader />;
+  }
+
+  if (error) {
+    return <div>Dakde ti to padlo</div>;
+  }
+
   return (
     <Page>
       <div>Welcome to homepage</div>
-      <div>We should render list of notes here</div>
+      <AddNoteForm />
+      <NoteList notes={data?.notes} />
     </Page>
   );
 };
