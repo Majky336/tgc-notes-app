@@ -6,60 +6,70 @@ using GraphQL.Types;
 using tgc_notes_be.Database;
 using tgc_notes_be.GraphQL;
 
-public class NoteMutation : ObjectGraphType {
-    public NoteMutation (ApplicationDbContext db) {
+public class NoteMutation : ObjectGraphType
+{
+    public NoteMutation(ApplicationDbContext db)
+    {
 
-        Field<NoteType> (
+        Field<NoteType>(
             "createNote",
-            arguments : new QueryArguments (
+            arguments: new QueryArguments(
                 new QueryArgument<NonNullGraphType<NoteInputType>> { Name = "Note", Description = "Note object for new note" }),
-            resolve : context => {
-                var noteToCreate = context.GetArgument<Note> ("note");
-                noteToCreate.Id = Guid.NewGuid ().ToString ();
+            resolve: context =>
+            {
+                var noteToCreate = context.GetArgument<Note>("note");
+                noteToCreate.Id = Guid.NewGuid().ToString();
 
-                db.Notes.Add (noteToCreate);
-                db.SaveChanges ();
+                db.Notes.Add(noteToCreate);
+                db.SaveChanges();
 
                 return noteToCreate;
             });
 
-        Field<NoteType> (
+        Field<NoteType>(
             "deleteNote",
-            arguments : new QueryArguments (
+            arguments: new QueryArguments(
                 new QueryArgument<NonNullGraphType<IdGraphType>> { Name = "Id", Description = "Id of note to be deleted" }),
-            resolve : context => {
-                var id = context.GetArgument<string> ("id");
+            resolve: context =>
+            {
+                var id = context.GetArgument<string>("id");
 
-                var noteToDelete = db.Notes.Single (Note => Note.Id == id);
+                var noteToDelete = db.Notes.Single(Note => Note.Id == id);
 
-                db.Notes.Remove (noteToDelete);
-                db.SaveChanges ();
+                db.Notes.Remove(noteToDelete);
+                db.SaveChanges();
 
                 return noteToDelete;
             });
 
-        Field<NoteType> (
+        Field<NoteType>(
             "updateNote",
-            arguments : new QueryArguments (
+            arguments: new QueryArguments(
                 new QueryArgument<NonNullGraphType<IdGraphType>> { Name = "Id", Description = "Id of note to be updated" },
                 new QueryArgument<NonNullGraphType<NoteInputType>> { Name = "Note", Description = "Note object to replace the original note properties" }
             ),
-            resolve : context => {
-                var id = context.GetArgument<string> ("id");
-                var note = context.GetArgument<Note> ("note");
+            resolve: context =>
+            {
+                var id = context.GetArgument<string>("id");
+                var note = context.GetArgument<Note>("note");
 
-                var noteToUpdate = db.Notes.Single (Note => Note.Id == id);
+                var noteToUpdate = db.Notes.Single(Note => Note.Id == id);
 
-                if (noteToUpdate == null) {
-                    context.Errors.Add (new ExecutionError ("Couldn't find note in db."));
+                if (noteToUpdate == null)
+                {
+                    context.Errors.Add(new ExecutionError("Couldn't find note in db."));
                     return null;
                 }
 
                 noteToUpdate.Title = note.Title;
 
-                if (note?.Text != null) {
+                if (note?.Text != null)
+                {
                     noteToUpdate.Text = note.Text;
                 }
+
+                db.Notes.Update(noteToUpdate);
+                db.SaveChanges();
 
                 return noteToUpdate;
             });

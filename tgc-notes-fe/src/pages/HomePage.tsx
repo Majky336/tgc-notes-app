@@ -21,6 +21,9 @@ const NOTES = gql`
 const HomePage = (props: RouteComponentProps) => {
   const { loading, error, data } = useQuery<NotesReponse>(NOTES);
 
+  console.log('Loading in home page', loading)
+  console.log('Notes in home page', data?.notes)
+
   if (loading) {
     return <Loader />;
   }

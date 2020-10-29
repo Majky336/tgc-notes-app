@@ -10,7 +10,7 @@ type Props = {
 };
 
 const NoteList: FC<Props> = ({ notes }) => {
-  if (!notes) {
+  if (!notes?.length) {
     return <div>List of notes is empty</div>;
   }
 
