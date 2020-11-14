@@ -23,6 +23,9 @@ namespace tgc_notes_be
                     }
                 );
 
+                context.Workbooks.Add(
+                    new Database.Workbook { Name = "My first notebook", Description = "GG WP Go next", CreatedAt = new System.DateTime() });
+
                 context.SaveChanges();
             }
             host.Run();

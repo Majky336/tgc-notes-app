@@ -9,5 +9,7 @@ namespace tgc_notes_be.Database
         { }
 
         public DbSet<Note> Notes { get; set; }
+
+        public DbSet<Workbook> Workbooks { get; set; }
     }
 }

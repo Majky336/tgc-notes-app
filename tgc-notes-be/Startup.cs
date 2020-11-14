@@ -4,9 +4,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
+
+using HotChocolate;
+using HotChocolate.AspNetCore;
 using tgc_notes_be.Database;
-using GraphiQl;
-using tgc_notes_be.GraphQL;
+using tgc_notes_be.Notes;
+using tgc_notes_be.Workbooks;
 
 namespace tgc_notes_be
 {
@@ -29,17 +32,23 @@ namespace tgc_notes_be
                         .AllowAnyHeader();
              }));
 
-            services.AddDbContext<ApplicationDbContext>(context =>
+            services.AddDbContextPool<ApplicationDbContext>(context =>
             {
-                context.UseInMemoryDatabase("OktaGraphQL");
+                context.UseInMemoryDatabase("GraphQL");
             });
 
-            services.AddControllersWithViews()
-                .AddNewtonsoftJson(options =>
-                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
-            );
-
-            services.AddMvc(option => option.EnableEndpointRouting = false);
+            services
+                .AddGraphQL(s => SchemaBuilder
+                    .New()
+                    .AddServices(s)
+                    .AddQueryType(d => d.Name("Query"))
+                        .AddType<NoteQueries>()
+                        .AddType<WorkbookQueries>()
+                    .AddMutationType(d => d.Name("Mutation"))
+                        .AddType<WorkbookMutations>()
+                        .AddType<NoteMutations>()
+                    .Create()
+                );
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -51,8 +60,12 @@ namespace tgc_notes_be
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.UseGraphiQl("/graphql");
-            app.UseMvc();
+
+            app.UseRouting();
+            app.UseWebSockets();
+            app.UseGraphQL();
+            app.UseGraphiQL();
+            app.UsePlayground();
         }
     }
 }
