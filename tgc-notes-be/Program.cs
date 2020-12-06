@@ -23,6 +23,28 @@ namespace tgc_notes_be
                     }
                 );
 
+                context.Notes.Add(
+                    new Note
+                    {
+                        Title = "Northwest Passage",
+                        Text = @"Ah, for just one time I would take the Northwest Passage
+To find the hand of Franklin reaching for the Beaufort Sea
+Tracing one warm line through a land so wide and savage
+And make a Northwest Passage to the sea"
+                    }
+                );
+
+                context.Notes.Add(
+                    new Note
+                    {
+                        Title = "Soulbound",
+                        Text = @"We race around the melted char of what was once a neutron star
+And use the gravity to whip us into dark galactic rifts
+Yet still somehow we can't escape, they have no flaw, they feel no pain
+These twisted shadows of the men I once condemned"
+                    }
+                );
+
                 context.SaveChanges();
             }
             host.Run();
