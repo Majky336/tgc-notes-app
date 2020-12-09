@@ -1,19 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
+import React, { useState } from "react";
+import { makeStyles, Theme, createStyles } from "@material-ui/core/styles";
 import { RouteComponentProps } from "@reach/router";
 
 import Page from "../components/Page/Page";
-import { gql, useQuery } from "@apollo/client";
-import { Note, NotesReponse } from "../types/TNote";
-import Loader from "../components/Loader/Loader";
+import { Note, NotesResponse } from "../types/TNote";
 import NoteList from "../components/NoteList/NoteList";
-import DisplayedNote from "../components/NoteDetail/NoteDetail";
-import {
-  Box,
-  Divider,
-} from '@material-ui/core';
+import NoteDetail from "../components/NoteDetail/NoteDetail";
+import { Box, Divider } from "@material-ui/core";
+import { gql, useQuery } from "@apollo/client";
 
-const NOTES = gql`
+export const NOTES = gql`
   query GetNotes {
     notes {
       id
@@ -23,87 +19,59 @@ const NOTES = gql`
   }
 `;
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles((_: Theme) =>
   createStyles({
     box: {
       height: "100vh",
-      display: "flex"
+      display: "flex",
     },
     noteList: {
-      maxWidth: "30%"
+      maxWidth: "30%",
+      overflowY: "auto",
     },
     noteDetail: {
-      width: "65%"
-    }
-  }),
+      width: "65%",
+    },
+  })
 );
 
-
-const HomePage = (props: RouteComponentProps) => {
-
+const HomePage = (_: RouteComponentProps) => {
   const classes = useStyles();
 
-  const { loading, error, data } = useQuery<NotesReponse>(NOTES);
-  const [displayedNote, setDisplayedNote] = useState(data?.notes[0]);
-  const [displayedIndex, setDisplayedIndex] = useState(displayedNote ? data?.notes.indexOf(displayedNote) : 0);
+  const { loading, error, data } = useQuery<NotesResponse>(NOTES);
 
-  useEffect(() => {
-    if (data?.notes) {
-      const targetNote = data.notes.find(note => displayedNote?.id === note.id);
-
-      setDisplayedNote(targetNote)
-
-      // select first note on first load
-      if (displayedNote === undefined) {
-        setDisplayedNote(data?.notes[0])
-      }
-    }
-  }, [data?.notes])
-
-  useEffect(() => {
-
-    let tempIndex = displayedIndex
-
-    if (data === undefined || tempIndex === undefined) {
-      return
-    }
-
-    if (displayedNote === undefined) {
-      if (tempIndex >= data.notes.length) {
-        tempIndex = data.notes.length - 1
-      }
-    } else {
-      tempIndex = data.notes.findIndex(note => displayedNote?.id === note.id)
-    }
-
-    setDisplayedNote(data?.notes[tempIndex])
-    setDisplayedIndex(tempIndex)
-  }, [displayedNote])
+  const [displayedNote, setDisplayedNote] = useState<Note>();
 
   if (loading) {
-    return <Loader />;
+    return <div>Loading</div>;
   }
 
   if (error) {
     return <div>An error has occured.</div>;
   }
 
+  const notes = data?.notes;
+
   const onNoteSelect = (note?: Note) => {
-    setDisplayedNote(note)
-  }
+    setDisplayedNote(note);
+  };
 
   return (
     <Page>
-      <Box className={classes.box} >
+      <Box className={classes.box}>
         <Box className={classes.noteList}>
-          <NoteList notes={data?.notes} onNoteSelect={onNoteSelect} />
+          <NoteList notes={notes} onNoteSelect={onNoteSelect} />
         </Box>
         <Divider flexItem orientation="vertical" />
         <Box className={classes.noteDetail}>
-          <DisplayedNote note={displayedNote} />
+          <NoteDetail
+            notes={notes}
+            note={displayedNote}
+            onNoteSelect={onNoteSelect}
+          />
         </Box>
       </Box>
-    </Page >
+    </Page>
   );
 };
 

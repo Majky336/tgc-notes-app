@@ -1,4 +1,4 @@
-export type NotesReponse = {
+export type NotesResponse = {
   notes: Notes;
 };
 

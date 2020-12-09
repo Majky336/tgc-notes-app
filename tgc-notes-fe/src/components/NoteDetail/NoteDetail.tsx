@@ -1,67 +1,85 @@
 import React, { ChangeEvent, FC, useState, useEffect } from "react";
-import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
+import { makeStyles, Theme, createStyles } from "@material-ui/core/styles";
 import {
   ListItemSecondaryAction,
   IconButton,
   TextField,
-  Typography
-} from '@material-ui/core';
+  Typography,
+} from "@material-ui/core";
 import { gql, useMutation } from "@apollo/client";
-import { Note } from "../../types/TNote";
+import { Note, NotesResponse } from "../../types/TNote";
 
-import DeleteIcon from '@material-ui/icons/Delete';
+import DeleteIcon from "@material-ui/icons/Delete";
+import { NOTES } from "../../pages/HomePage";
 
 type Props = {
   note?: Note;
+  notes?: Note[];
+  onNoteSelect: (note?: Note) => void;
 };
 
 const DELETE_NOTE = gql`
-mutation DeleteNote($id: ID!) {
-  deleteNote(id: $id) {
-    id
+  mutation DeleteNote($id: ID!) {
+    deleteNote(id: $id) {
+      id
+    }
   }
-}
 `;
 
 const UPDATE_NOTE = gql`
-mutation UpdateNote($id: ID!, $note: NoteInput!) {
-  updateNote(id: $id, note: $note) {
-    id
-    title
-    text
+  mutation UpdateNote($id: ID!, $note: NoteInput!) {
+    updateNote(id: $id, note: $note) {
+      id
+      title
+      text
+    }
   }
-}
 `;
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     resize: {
-      fontSize: 40
+      fontSize: 40,
     },
     title: {
-      marginLeft: '10px',
-      marginTop: '7px'
+      marginLeft: "10px",
+      marginTop: "7px",
     },
     text: {
-      marginLeft: '10px',
-      marginTop: '20px'
+      marginLeft: "10px",
+      marginTop: "20px",
     },
     iconBar: {
       position: "absolute",
-      top: "30px"
-    }
-  }),
+      top: "30px",
+    },
+  })
 );
 
-const DisplayedNote: FC<Props> = ({ note }) => {
-
+const NoteDetail: FC<Props> = ({ note, notes, onNoteSelect }) => {
   const classes = useStyles();
 
   const [noteTitle, setNoteTitle] = useState(note?.title || "");
   const [noteText, setNoteText] = useState(note?.text || "");
 
-  const [deleteNodeMutation] = useMutation(DELETE_NOTE, { refetchQueries: ['GetNotes'] });
-  const [updateNoteMutation] = useMutation(UPDATE_NOTE, { refetchQueries: ['GetNotes'] });
+  useEffect(() => {
+    if (!note) {
+      onNoteSelect(notes?.[0]);
+    }
+  }, []);
+
+  const [deleteNodeMutation] = useMutation(DELETE_NOTE, {
+    refetchQueries: ["GetNotes"],
+    onCompleted: ({ deleteNote }) => {
+      const deletedNoteIndex =
+        notes?.findIndex((noteObj) => noteObj.id === deleteNote.id) || 0;
+      const displayedNoteIndex =
+        deletedNoteIndex === 0 ? deletedNoteIndex + 1 : deletedNoteIndex - 1;
+
+      onNoteSelect(notes?.[displayedNoteIndex]);
+    },
+  });
+  const [updateNoteMutation] = useMutation(UPDATE_NOTE);
 
   const handeNoteTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setNoteTitle(event.target.value);
@@ -71,7 +89,7 @@ const DisplayedNote: FC<Props> = ({ note }) => {
     setNoteText(event.target.value);
   };
 
-  const removeNote = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const removeNote = () => {
     if (note != null) {
       deleteNodeMutation({ variables: { id: note.id } });
     }
@@ -79,13 +97,25 @@ const DisplayedNote: FC<Props> = ({ note }) => {
 
   const updateNote = () => {
     if (note != null) {
-      updateNoteMutation({ variables: { id: note.id, note: { title: noteTitle, text: noteText } } });
+      updateNoteMutation({
+        variables: { id: note.id, note: { title: noteTitle, text: noteText } },
+        update: (cache, { data }) => {
+          const notesQuery = cache.readQuery<NotesResponse>({ query: NOTES });
+          const updatedNote = data?.updateNote;
+
+          const updatedNotes = notesQuery?.notes?.map((originalNote) =>
+            originalNote.id === updatedNote.id ? updatedNote : originalNote
+          );
+
+          cache.writeQuery({ query: NOTES, data: { notes: updatedNotes } });
+        },
+      });
     }
   };
 
   useEffect(() => {
-    setNoteTitle(note?.title || "")
-    setNoteText(note?.text || "")
+    setNoteTitle(note?.title || "");
+    setNoteText(note?.text || "");
   }, [note]);
 
   if (note != null) {
@@ -120,16 +150,16 @@ const DisplayedNote: FC<Props> = ({ note }) => {
           </IconButton>
         </ListItemSecondaryAction>
       </div>
-    )
+    );
   }
 
   return (
     <div>
       <Typography variant="h4" gutterBottom className={classes.title}>
         Pick a note from the list
-        </Typography>
-    </div >
-  )
+      </Typography>
+    </div>
+  );
 };
 
-export default DisplayedNote;
+export default NoteDetail;

@@ -17,6 +17,9 @@ type Props = {
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
+    item: {
+      cursor: "pointer",
+    },
     limited: {
       whiteSpace: "nowrap",
       overflow: "hidden",
@@ -26,7 +29,6 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 const NoteListItem: FC<Props> = ({ note, onNoteSelect }) => {
-
   const classes = useStyles();
 
   const handleChangeDisplayedNote = (event: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
@@ -36,7 +38,7 @@ const NoteListItem: FC<Props> = ({ note, onNoteSelect }) => {
   return (
     <div>
       <Divider />
-      <ListItem onClick={handleChangeDisplayedNote}>
+      <ListItem className={classes.item} onClick={handleChangeDisplayedNote}>
         <ListItemText
           primary={note.title}
           secondary={note.text}
